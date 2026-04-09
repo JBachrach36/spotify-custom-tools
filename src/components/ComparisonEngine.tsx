@@ -33,9 +33,6 @@ interface PlaylistData {
   id: string;
   tracks: { track: Track }[];
 }
-
-}
-
 type CompareMode = "intersection" | "artists";
 
 const MODES = [
@@ -77,7 +74,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
     setError(null);
     setCreatedUrl(null);
     setPlaylists([]);
-    setAudioFeatures({});
     setSelectedUris(new Set());
 
     try {
@@ -312,12 +308,7 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
       {/* Results */}
       {hasResults && (
         <div>
-          {/* Radar chart (always shown when data is loaded) */}
-          {Object.keys(audioFeatures).length > 0 && (
-            <div style={{ marginBottom: "24px" }}>
-              <VibeRadarChart playlists={radarData()} />
-            </div>
-          )}
+
 
           {/* Re-compare button */}
           <div className="flex items-center gap-3" style={{ marginBottom: "20px" }}>
