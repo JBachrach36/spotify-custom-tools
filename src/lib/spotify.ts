@@ -50,6 +50,14 @@ export function extractPlaylistId(urlOrId: string) {
 }
 
 /**
+ * Fetch basic info for a single playlist
+ */
+export async function getPlaylistInfo(playlistId: string) {
+  const id = extractPlaylistId(playlistId);
+  return fetchSpotify(`/playlists/${id}?fields=id,name`);
+}
+
+/**
  * Given a playlist ID, fetch all of its tracks (handling pagination).
  */
 export async function getPlaylistTracks(playlistId: string) {

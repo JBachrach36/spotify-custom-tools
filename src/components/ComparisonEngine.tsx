@@ -10,7 +10,10 @@ import {
   ListMusic,
   CheckCircle2,
   ExternalLink,
+  LogOut,
+  AlertCircle,
 } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { TrackRow } from "./TrackRow";
 import { VibeSelector, VibeFilter } from "./VibeSelector";
 import { VibeRadarChart } from "./VibeRadarChart";
@@ -137,7 +140,11 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
         setLoadingFeatures(false);
       }
     } catch (e: any) {
-      setError(e.message ?? "Something went wrong.");
+      if (e.message && e.message.includes("Unauthorized")) {
+        setError("Your Spotify session has expired. Please log in again to continue.");
+      } else {
+        setError(e.message ?? "Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -375,13 +382,38 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
             background: "rgba(241, 94, 108, 0.1)",
             border: "1px solid rgba(241, 94, 108, 0.4)",
             borderRadius: "8px",
-            padding: "12px 16px",
-            color: "#F15E6C",
-            fontSize: "13px",
+            padding: "16px",
+            color: "#FFFFFF",
             marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {error}
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} color="#F15E6C" aria-hidden="true" />
+            <span style={{ fontSize: "14px", fontWeight: 500 }}>{error}</span>
+          </div>
+          {error.includes("expired") && (
+            <button
+              onClick={() => signIn("spotify")}
+              style={{
+                background: "#F15E6C",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                color: "#191414",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
+            >
+              Log In Again
+            </button>
+          )}
         </div>
       )}
 

@@ -13,10 +13,11 @@ function isValidSpotifyPlaylistUrl(url: string): boolean {
 
 export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
   const [inputValue, setInputValue] = useState("");
-  const [urls, setUrls] = useState<string[]>([]);
+  const [playlists, setPlaylists] = useState<{ url: string; id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const addPlaylist = () => {
+  const addPlaylist = async () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
 
@@ -24,26 +25,48 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
       setError("Please paste a valid Spotify playlist URL (e.g. open.spotify.com/playlist/...)");
       return;
     }
-    if (urls.includes(trimmed)) {
+    if (playlists.find((pl) => pl.url === trimmed)) {
       setError("This playlist has already been added.");
       return;
     }
-    if (urls.length >= 100) {
+    if (playlists.length >= 100) {
       setError("Maximum of 100 playlists allowed.");
       return;
     }
 
-    const next = [...urls, trimmed];
-    setUrls(next);
-    onPlaylistsChange(next);
-    setInputValue("");
+    setLoading(true);
     setError("");
+
+    try {
+      const res = await fetch("/api/spotify/playlist-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Spotify Session expired. Please refresh the page and sign in again.");
+        }
+        throw new Error(data.error ?? "Failed to fetch playlist info.");
+      }
+
+      const next = [...playlists, { url: trimmed, id: data.info.id, name: data.info.name }];
+      setPlaylists(next);
+      onPlaylistsChange(next.map(p => p.url));
+      setInputValue("");
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const removePlaylist = (index: number) => {
-    const next = urls.filter((_, i) => i !== index);
-    setUrls(next);
-    onPlaylistsChange(next);
+    const next = playlists.filter((_, i) => i !== index);
+    setPlaylists(next);
+    onPlaylistsChange(next.map(p => p.url));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -108,32 +131,36 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
         <button
           id="btn-add-playlist"
           onClick={addPlaylist}
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || loading}
           className="flex items-center gap-2 cursor-pointer"
           aria-label="Add playlist"
           style={{
-            background: inputValue.trim() ? "#1DB954" : "#282828",
+            background: inputValue.trim() && !loading ? "#1DB954" : "#282828",
             border: "none",
             borderRadius: "8px",
             padding: "12px 20px",
-            color: inputValue.trim() ? "#000000" : "#535353",
+            color: inputValue.trim() && !loading ? "#000000" : "#535353",
             fontSize: "14px",
             fontWeight: 700,
             transition: "background-color 0.2s, color 0.2s",
-            cursor: inputValue.trim() ? "pointer" : "not-allowed",
+            cursor: inputValue.trim() && !loading ? "pointer" : "not-allowed",
             whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
-            if (inputValue.trim())
+            if (inputValue.trim() && !loading)
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1ED760";
           }}
           onMouseLeave={(e) => {
-            if (inputValue.trim())
+            if (inputValue.trim() && !loading)
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1DB954";
           }}
         >
-          <Plus size={16} aria-hidden="true" />
-          Add
+          {loading ? "Adding..." : (
+            <>
+              <Plus size={16} aria-hidden="true" />
+              Add
+            </>
+          )}
         </button>
       </div>
 
@@ -150,16 +177,15 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
       )}
 
       {/* Playlist chips */}
-      {urls.length > 0 && (
+      {playlists.length > 0 && (
         <div
           className="flex flex-wrap gap-2 mt-4"
-          aria-label={`${urls.length} playlists added`}
+          aria-label={`${playlists.length} playlists added`}
         >
-          {urls.map((url, i) => {
-            const id = url.match(/playlist\/([a-zA-Z0-9]+)/)?.[1] ?? url;
+          {playlists.map((pl, i) => {
             return (
               <div
-                key={url}
+                key={pl.url}
                 className="flex items-center gap-2"
                 style={{
                   background: "#282828",
@@ -189,9 +215,9 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
                     color: "#B3B3B3",
                     fontSize: "12px",
                   }}
-                  title={url}
+                  title={pl.url}
                 >
-                  {id}
+                  {pl.name}
                 </span>
                 <button
                   onClick={() => removePlaylist(i)}
@@ -221,10 +247,10 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
       )}
 
       {/* Count badge */}
-      {urls.length > 0 && (
+      {playlists.length > 0 && (
         <p style={{ color: "#B3B3B3", fontSize: "12px", marginTop: "12px" }}>
-          {urls.length} playlist{urls.length !== 1 ? "s" : ""} added
-          {urls.length < 2 && (
+          {playlists.length} playlist{playlists.length !== 1 ? "s" : ""} added
+          {playlists.length < 2 && (
             <span style={{ color: "#F15E6C" }}> — add at least 1 more to compare</span>
           )}
         </p>
