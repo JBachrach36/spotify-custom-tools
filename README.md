@@ -1,52 +1,36 @@
-# Spotify Custom Tools
+# PlaylistVibe for Spotify 🎵
 
-A powerful, local Spotify utility application that allows users to compare multiple playlists (up to 100) and perform complex analytical operations. Designed for data-driven music curation, it can identify common songs across playlists and export these insights directly into a new playlist.
+PlaylistVibe is a local Next.js utility that lets you compare Spotify playlists to find common songs, find artist overlap, and filter existing songs by their specific vibes (energy, danceability, valence, acousticness) to create highly curated mixes. 
 
 ## Features
 
-- **Advanced Playlist Comparison**: Compare up to 100 playlists to find intersections and unique tracks.
-- **Analytical Operations**: Identify common songs and analyze listening patterns.
-- **Playlist Export**: Seamlessly export your generated and filtered song lists into new Spotify playlists.
-- **Black-and-Green UI**: A cohesive, premium design system inspired by Spotify.
+- **Common Songs** 🔀: Input up to 100 Spotify playlists and instantly see exactly which songs appear in all of them.
+- **Vibe Filter** ⚡: Analyze the exact audio features (Energy, Positivity, Danceability, Acousticness) of songs, and filter them using a visual radar chart and manual dual-slice sliders (e.g., find all high-energy and high-danceability common tracks). 
+- **Artist Overlap** 👥: Quickly discover matching artists across playlists, even if the exact tracks don't overlap.
+- **Export Mixes**: Save the final curated tracks natively back to your Spotify account as a new playlist.
 
-## Getting Started
+## Setup Instructions
 
-### Prerequisites
+This project uses Next.js with `next-auth` to interact directly with the Spotify Web API.
 
-You will need a Spotify Developer account and an active application to get your API keys.
+1. **Clone the repository**
+2. **Install dependencies**: `npm install`
+3. **Register your app on Spotify**:
+   - Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create a new project.
+   - For Redirect URI, enter: `http://localhost:3000/api/auth/callback/spotify`
+4. **Environment Variables**: Create a `.env.local` file in the root directory:
+   ```env
+   SPOTIFY_CLIENT_ID=your_client_id_here
+   SPOTIFY_CLIENT_SECRET=your_client_secret_here
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=a_random_secure_string
+   ```
+5. **Run the dev server**:
+   `npm run dev`
+6. Open `http://localhost:3000` in your browser. 
 
-1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/).
-2. Create an application.
-3. Retrieve your **Client ID** and **Client Secret**.
-4. Set the Redirect URI in your application settings to `http://localhost:3000/api/auth/callback/spotify`.
+## Privacy & Security
 
-### Environment Setup
+All interactions with Spotify happen directly via NextAuth. Your Spotify credentials are required locally but never stored externally. Ensure `.env.local` remains out of version control and in the provided `.gitignore`.
 
-Create a `.env.local` file in the root of the project to store your secret keys. **Never commit this file to public repositories.**
-
-```env
-SPOTIFY_CLIENT_ID=your_client_id_here
-SPOTIFY_CLIENT_SECRET=your_client_secret_here
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=generate_a_random_secure_string
-```
-
-### Installation
-
-Install the required dependencies:
-
-```bash
-npm install
-# or yarn install / pnpm install
-```
-
-### Running the App
-
-Start the development server:
-
-```bash
-npm run dev
-# or yarn dev / pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application running.
+Built with Next.js 16, Tailwind CSS v4, and Recharts. Designed loosely based on the [Spotify Design Guidelines](https://developer.spotify.com/documentation/design).
