@@ -63,7 +63,7 @@ export async function getPlaylistInfo(playlistId: string) {
 export async function getPlaylistTracks(playlistId: string) {
   const id = extractPlaylistId(playlistId);
   let tracks: any[] = [];
-  let nextUrl: string | null = `/playlists/${id}/tracks?limit=100`;
+  let nextUrl: string | null = `/playlists/${id}/items?limit=100`;
 
   while (nextUrl) {
     // Strip the SPOTIFY_BASE_URL if it's an absolute URL from pagination `next` return
