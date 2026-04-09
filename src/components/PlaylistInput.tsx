@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, X, Link2, AlertCircle } from "lucide-react";
+import { signIn } from "next-auth/react";
 
 interface PlaylistInputProps {
   onPlaylistsChange: (urls: string[]) => void;
@@ -167,12 +168,43 @@ export function PlaylistInput({ onPlaylistsChange }: PlaylistInputProps) {
       {/* Error */}
       {error && (
         <div
-          className="flex items-center gap-2 mt-2"
           role="alert"
-          style={{ color: "#F15E6C", fontSize: "13px" }}
+          style={{
+            background: "rgba(241, 94, 108, 0.1)",
+            border: "1px solid rgba(241, 94, 108, 0.4)",
+            borderRadius: "8px",
+            padding: "16px",
+            color: "#FFFFFF",
+            marginTop: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <AlertCircle size={14} aria-hidden="true" />
-          {error}
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} color="#F15E6C" aria-hidden="true" />
+            <span style={{ fontSize: "14px", fontWeight: 500 }}>{error}</span>
+          </div>
+          {error.includes("expired") && (
+            <button
+              onClick={() => signIn("spotify")}
+              style={{
+                background: "#F15E6C",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                color: "#191414",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.9")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
+            >
+              Log In Again
+            </button>
+          )}
         </div>
       )}
 

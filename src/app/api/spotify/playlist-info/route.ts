@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("[/api/spotify/playlist-info]", err);
     // Let the client distinguish a 401
-    const isUnauthorized = err.message?.includes("401");
+    const isUnauthorized = err.message?.includes("401") || err.message?.includes("Unauthorized");
     return NextResponse.json(
       { error: err.message ?? "Failed to fetch playlist info." },
       { status: isUnauthorized ? 401 : 500 }
