@@ -18,12 +18,6 @@ interface TrackRowProps {
   index: number;
   selected?: boolean;
   onToggleSelect?: (uri: string) => void;
-  audioFeatures?: {
-    energy?: number;
-    valence?: number;
-    danceability?: number;
-    acousticness?: number;
-  };
 }
 
 function formatDuration(ms: number): string {
@@ -32,57 +26,11 @@ function formatDuration(ms: number): string {
   return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
-function FeaturePill({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  const pct = Math.round(value * 100);
-  return (
-    <div
-      title={`${label}: ${pct}%`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "2px",
-      }}
-    >
-      <div
-        style={{
-          width: "28px",
-          height: "4px",
-          borderRadius: "2px",
-          background: "#282828",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${pct}%`,
-            height: "100%",
-            background: color,
-            transition: "width 0.5s ease",
-          }}
-        />
-      </div>
-      <span style={{ fontSize: "9px", color: "#B3B3B3", letterSpacing: "0.05em" }}>
-        {label.slice(0, 3).toUpperCase()}
-      </span>
-    </div>
-  );
-}
-
 export function TrackRow({
   track,
   index,
   selected,
   onToggleSelect,
-  audioFeatures,
 }: TrackRowProps) {
   const albumArt = track.album?.images?.find((img) => img.width <= 64) ??
     track.album?.images?.[track.album.images.length - 1];
@@ -199,21 +147,6 @@ export function TrackRow({
           {artistNames}
         </p>
       </div>
-
-      {/* Audio feature mini-bars */}
-      {audioFeatures && (
-        <div className="hidden md:flex items-center gap-3" aria-hidden="true">
-          {audioFeatures.energy !== undefined && (
-            <FeaturePill label="Energy" value={audioFeatures.energy} color="#1DB954" />
-          )}
-          {audioFeatures.danceability !== undefined && (
-            <FeaturePill label="Dance" value={audioFeatures.danceability} color="#1DA0F2" />
-          )}
-          {audioFeatures.valence !== undefined && (
-            <FeaturePill label="Valence" value={audioFeatures.valence} color="#FFD700" />
-          )}
-        </div>
-      )}
 
       {/* Duration */}
       <span

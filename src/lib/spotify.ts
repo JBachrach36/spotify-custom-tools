@@ -81,25 +81,6 @@ export async function getPlaylistTracks(playlistId: string) {
 }
 
 /**
- * Fetch Audio Features for a list of track IDs
- * Spotify allows max 100 IDs per request.
- */
-export async function getAudioFeaturesForTracks(trackIds: string[]) {
-  let features: any[] = [];
-  
-  // Chunk into 100s
-  for (let i = 0; i < trackIds.length; i += 100) {
-    const chunk = trackIds.slice(i, i + 100);
-    const data = await fetchSpotify(`/audio-features?ids=${chunk.join(",")}`);
-    if (data.audio_features) {
-      features = [...features, ...data.audio_features.filter(Boolean)];
-    }
-  }
-  
-  return features;
-}
-
-/**
  * Gets the current user profile
  */
 export async function getCurrentUser() {

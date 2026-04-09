@@ -15,8 +15,6 @@ import {
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { TrackRow } from "./TrackRow";
-import { VibeSelector, VibeFilter } from "./VibeSelector";
-import { VibeRadarChart } from "./VibeRadarChart";
 
 interface Track {
   id: string;
@@ -36,16 +34,9 @@ interface PlaylistData {
   tracks: { track: Track }[];
 }
 
-interface AudioFeatureMap {
-  [trackId: string]: {
-    energy: number;
-    danceability: number;
-    valence: number;
-    acousticness: number;
-  };
 }
 
-type CompareMode = "intersection" | "artists" | "vibe";
+type CompareMode = "intersection" | "artists";
 
 const MODES = [
   {
@@ -60,12 +51,6 @@ const MODES = [
     icon: Users,
     description: "Artists appearing in ALL playlists",
   },
-  {
-    id: "vibe" as CompareMode,
-    label: "Vibe Filter",
-    icon: Zap,
-    description: "Filter songs by audio features",
-  },
 ];
 
 interface ComparisonEngineProps {
@@ -76,16 +61,8 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState(false);
-  const [loadingFeatures, setLoadingFeatures] = useState(false);
   const [mode, setMode] = useState<CompareMode>("intersection");
   const [playlists, setPlaylists] = useState<PlaylistData[]>([]);
-  const [audioFeatures, setAudioFeatures] = useState<AudioFeatureMap>({});
-  const [vibeFilter, setVibeFilter] = useState<VibeFilter>({
-    energy: [0, 1],
-    danceability: [0, 1],
-    valence: [0, 1],
-    acousticness: [0, 1],
-  });
   const [selectedUris, setSelectedUris] = useState<Set<string>>(new Set());
   const [playlistName, setPlaylistName] = useState("My PlaylistVibe Mix");
   const [creating, setCreating] = useState(false);
@@ -113,32 +90,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
       if (!res.ok) throw new Error(data.error ?? "Failed to fetch playlists");
 
       setPlaylists(data.playlists);
-
-      // Pre-fetch audio features for all unique tracks
-      const allIds = Array.from(
-        new Set(
-          data.playlists.flatMap((pl: PlaylistData) =>
-            pl.tracks.map((t) => t.track.id).filter(Boolean)
-          )
-        )
-      );
-      if (allIds.length > 0) {
-        setLoadingFeatures(true);
-        const featRes = await fetch("/api/spotify/audio-features", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ trackIds: allIds }),
-        });
-        const featData = await featRes.json();
-        if (featRes.ok && featData.features) {
-          const map: AudioFeatureMap = {};
-          featData.features.forEach((f: any) => {
-            if (f?.id) map[f.id] = f;
-          });
-          setAudioFeatures(map);
-        }
-        setLoadingFeatures(false);
-      }
     } catch (e: any) {
       if (e.message && e.message.includes("Unauthorized")) {
         setError("Your Spotify session has expired. Please log in again to continue.");
@@ -181,53 +132,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
     );
   }, [playlists]);
 
-  const vibeFilteredTracks = useCallback((): Track[] => {
-    if (playlists.length === 0) return [];
-    // Deduplicate all tracks across playlists
-    const seen = new Set<string>();
-    const all: Track[] = [];
-    for (const pl of playlists) {
-      for (const t of pl.tracks) {
-        if (t.track?.id && !seen.has(t.track.id)) {
-          seen.add(t.track.id);
-          all.push(t.track);
-        }
-      }
-    }
-    return all.filter((t) => {
-      const f = audioFeatures[t.id];
-      if (!f) return false;
-      const within = (val: number, range: [number, number]) =>
-        val >= range[0] && val <= range[1];
-      return (
-        within(f.energy, vibeFilter.energy) &&
-        within(f.danceability, vibeFilter.danceability) &&
-        within(f.valence, vibeFilter.valence) &&
-        within(f.acousticness, vibeFilter.acousticness)
-      );
-    });
-  }, [playlists, audioFeatures, vibeFilter]);
-
-  const radarData = useCallback(() => {
-    return playlists.map((pl, i) => {
-      const tracksWithFeatures = pl.tracks
-        .map((t) => audioFeatures[t.track?.id])
-        .filter(Boolean);
-      const avg = (key: string) =>
-        tracksWithFeatures.length > 0
-          ? tracksWithFeatures.reduce((s, f: any) => s + (f[key] ?? 0), 0) /
-            tracksWithFeatures.length
-          : 0;
-      return {
-        name: `Playlist ${i + 1}`,
-        energy: avg("energy"),
-        danceability: avg("danceability"),
-        valence: avg("valence"),
-        acousticness: avg("acousticness"),
-      };
-    });
-  }, [playlists, audioFeatures]);
-
   // ── Toggle track selection ────────────────────────────────────────────────
   const toggleSelect = (uri: string) => {
     setSelectedUris((prev) => {
@@ -255,7 +159,7 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: playlistName,
-          description: `Created with PlaylistVibe — Vibe mode: ${mode}`,
+          description: `Created with PlaylistVibe — Mode: ${mode}`,
           trackUris: Array.from(selectedUris),
         }),
       });
@@ -270,12 +174,7 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
   };
 
   // ── Active result tracks for current mode ────────────────────────────────
-  const activeTracks =
-    mode === "intersection"
-      ? commonTracks()
-      : mode === "vibe"
-      ? vibeFilteredTracks()
-      : [];
+  const activeTracks = mode === "intersection" ? commonTracks() : [];
 
   const hasResults = playlists.length > 0;
 
@@ -328,13 +227,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
           );
         })}
       </div>
-
-      {/* Vibe filter panel (only in vibe mode) */}
-      {mode === "vibe" && (
-        <div style={{ marginBottom: "20px" }}>
-          <VibeSelector onFilterChange={setVibeFilter} />
-        </div>
-      )}
 
       {/* Compare button */}
       {!hasResults && (
@@ -456,12 +348,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
               {loading && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
               Refresh
             </button>
-
-            {loadingFeatures && (
-              <span style={{ color: "#B3B3B3", fontSize: "12px" }}>
-                Loading audio features…
-              </span>
-            )}
           </div>
 
           {/* Mode: Artist overlap */}
@@ -498,8 +384,8 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
             </div>
           )}
 
-          {/* Mode: Tracks (intersection or vibe) */}
-          {(mode === "intersection" || mode === "vibe") && (
+          {/* Mode: Tracks (intersection) */}
+          {(mode === "intersection") && (
             <div>
               {/* Stats + select controls */}
               <div
@@ -512,7 +398,7 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
                   </span>{" "}
                   {mode === "intersection"
                     ? `track${activeTracks.length !== 1 ? "s" : ""} in common`
-                    : `track${activeTracks.length !== 1 ? "s" : ""} match your vibe`}
+                    : `track${activeTracks.length !== 1 ? "s" : ""}`}
                 </p>
                 {activeTracks.length > 0 && (
                   <div className="flex gap-3">
@@ -586,9 +472,7 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
                       color: "#B3B3B3",
                     }}
                   >
-                    {mode === "vibe"
-                      ? "No tracks match your current vibe settings. Try adjusting the sliders."
-                      : "No songs in common across all playlists."}
+                    No songs in common across all playlists.
                   </div>
                 ) : (
                   <div style={{ padding: "8px" }}>
@@ -599,7 +483,6 @@ export function ComparisonEngine({ playlistUrls }: ComparisonEngineProps) {
                         index={i}
                         selected={selectedUris.has(track.uri)}
                         onToggleSelect={toggleSelect}
-                        audioFeatures={audioFeatures[track.id]}
                       />
                     ))}
                   </div>
