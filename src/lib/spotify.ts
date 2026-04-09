@@ -67,9 +67,11 @@ export async function getPlaylistTracks(playlistId: string) {
 
   while (nextUrl) {
     // Strip the SPOTIFY_BASE_URL if it's an absolute URL from pagination `next` return
+    // CRITICAL FIX: Spotify's nextUrl pagination still blindly returns `/tracks` in its URL string! 
+    // We must manually overwrite it to `/items` to bypass the 403 Forbidden block!
     const endpoint = nextUrl.startsWith("http")
-      ? nextUrl.replace(SPOTIFY_BASE_URL, "")
-      : nextUrl;
+      ? nextUrl.replace(SPOTIFY_BASE_URL, "").replace("/tracks?", "/items?")
+      : nextUrl.replace("/tracks?", "/items?");
 
     const data = await fetchSpotify(endpoint);
     tracks = [...tracks, ...data.items];
