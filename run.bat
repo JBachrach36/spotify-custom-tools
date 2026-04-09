@@ -9,7 +9,7 @@ if not exist node_modules\ (
 
 :: Start the Next.js development server in the background
 echo Starting the development server...
-start /b cmd /c "npm run dev"
+start /b cmd /c "npm run dev -- -H 127.0.0.1"
 
 :: Wait a few seconds to let the server initialize
 timeout /t 5 /nobreak > NUL
