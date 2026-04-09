@@ -14,8 +14,8 @@ start /b cmd /c "npm run dev"
 :: Wait a few seconds to let the server initialize
 timeout /t 5 /nobreak > NUL
 
-:: Open the browser to localhost
-echo Opening browser to http://localhost:3000...
-start http://localhost:3000
+:: Open the browser to 127.0.0.1
+echo Opening browser to http://127.0.0.1:3000...
+start http://127.0.0.1:3000
 
 echo Ready! You can close this window when you're done stopping the server.

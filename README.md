@@ -17,17 +17,17 @@ This project uses Next.js with `next-auth` to interact directly with the Spotify
 2. **Install dependencies**: `npm install`
 3. **Register your app on Spotify**:
    - Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create a new project.
-   - For Redirect URI, enter: `http://localhost:3000/api/auth/callback/spotify`
+   - For Redirect URI, enter: `http://127.0.0.1:3000/api/auth/callback/spotify`
 4. **Environment Variables**: Create a `.env.local` file in the root directory:
    ```env
    SPOTIFY_CLIENT_ID=your_client_id_here
    SPOTIFY_CLIENT_SECRET=your_client_secret_here
-   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_URL=http://127.0.0.1:3000
    NEXTAUTH_SECRET=a_random_secure_string
    ```
 5. **Run the dev server**:
    `npm run dev`
-6. Open `http://localhost:3000` in your browser. 
+6. Open `http://127.0.0.1:3000` in your browser. 
 
 ## Privacy & Security
 
